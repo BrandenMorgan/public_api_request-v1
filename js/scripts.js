@@ -1,44 +1,46 @@
-/*
-  Okay to use "<element>.innerHTML = string" on
-  No results message lines 277, 271, 250 and 243
-  Modal window lines 186, 170, 160
-  Is async/await necessary? If not, in what context should it be used?
-*/
-
 // Select gallery div to append new elements
 const gallery = document.getElementById("gallery");
+
+// Select the search container div
 const searchContainer = document.querySelector(".search-container");
 
-// Search container
+// Create form element and append to the search container div
 const form = document.createElement("form");
 form.setAttribute("action", "#");
 form.setAttribute("method", "GET");
 searchContainer.appendChild(form);
 
+// Create input field and submit button markup
 const searchHTML = `
 <input type="search" id="search-input" class="search-input" placeholder="Search...">
 <input type="submit" value="&#x1F50D;" id="search-submit" class="search-submit">
 `;
 
+// Insert into form element
 form.insertAdjacentHTML("beforeend", searchHTML);
-const searchSubmit = document.getElementById("search-submit");
-const formInput = document.getElementById("search-input");
 
 // https://stackoverflow.com/questions/8358084/regular-expression-to-reformat-a-us-phone-number-in-javascript
-// Function to format phone number to (XXX) XXX-XXXX
+/**
+ * Formats phone number to (XXX) XXX-XXXX
+ * @param {string} phoneNumberString - The phone number to format
+ * @return {string} Formatted phone number or 'No phone number on file'
+ */
 function formatPhoneNumber(phoneNumberString) {
-  // replace any characters that aren't numbers at the beginning of the string with empty string
+  // Replace any characters that aren't numbers at the beginning of the string with empty string
   const cleaned = ("" + phoneNumberString).replace(/\D/g, "");
   const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
   if (match) {
-    // return the formatted number
     return `(${match[1]}) ${match[2]}-${match[3]}`;
   }
   // Display message if no number provided
   return "No phone number on file";
 }
 
-// Format employee date of birth to MM/DD/YYYY
+/**
+ * Format employee date of birth to MM/DD/YYYY
+ * @param {string} dob - Employee date of birth
+ * @return {string} - Formatted date of birth string
+ */
 function formatDOB(dob) {
   const month = dob.substring(5, 7);
   const day = dob.substring(8, 10);
@@ -46,6 +48,11 @@ function formatDOB(dob) {
   return (dob = `${month}/${day}/${year}`);
 }
 
+/**
+ * Generate data to use in modal pop up window
+ * @param {string} employee - The data for an employee
+ * @return {string} - Formatted html string with interpolated data
+ */
 function generateModalData(employee) {
   // Format phone number and date of birth to interpolate
   let phoneNumber = formatPhoneNumber(employee.cell);
@@ -55,7 +62,7 @@ function generateModalData(employee) {
   let modalInfoHTML = `
   <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
     <div class="modal-info-container">
-        <img class="modal-img" src="${employee.picture.medium}" alt="profile picture">
+        <img class="modal-img" src="${employee.picture.large}" alt="profile picture">
         <h3 id="name" class="modal-name cap">${employee.name.first}
           ${employee.name.last}</h3>
         <p class="modal-text">${employee.email}</p>
@@ -71,21 +78,24 @@ function generateModalData(employee) {
   return modalInfoHTML;
 }
 
-// Function to create an element and give it a class name
+/**
+ * Function to create an element and give it a class name
+ * @param {string} element - The name of the element to create
+ * @param {string} className - The name of the class to add to the element
+ * @return {element} - The element created
+ */
 function makeElement(element, className) {
   const newElement = document.createElement(element);
   newElement.className = className;
   return newElement;
 }
 
+/**
+ * Function to dynamically create and insert each employee card into the markup
+ * @param {array} jsonData - Array of employee objects
+ */
 function generateEmployees(jsonData) {
   const employees = jsonData.map((employee) => {
-    // Modal toggle button variables
-    let currentEmployeeIndex;
-    let nextEmployee;
-    let currentEmployee;
-    let previousEmployee;
-
     // Create a card container for each employee
     const cardDiv = makeElement("div", "card");
     gallery.appendChild(cardDiv);
@@ -96,7 +106,7 @@ function generateEmployees(jsonData) {
 
     // Create HTML string to insert into the image div
     const imgHTML = `
-      <img class="card-img" src="${employee.picture.thumbnail}"
+      <img class="card-img" src="${employee.picture.medium}"
         alt="profile picture">
       `;
     imageDiv.insertAdjacentHTML("beforeend", imgHTML);
@@ -115,11 +125,19 @@ function generateEmployees(jsonData) {
     `;
     infoDiv.insertAdjacentHTML("beforeend", infoHTML);
 
-    // Event listener on each card div to trigger modal window
+    // Click event listener on each card div to trigger modal window
     cardDiv.addEventListener("click", () => {
+      // Modal toggle button variables
+      let currentEmployeeIndex;
+      let nextEmployee;
+      let currentEmployee;
+      let previousEmployee;
+
+      // Iterate through jsonData to find the object that matches the clicked employee
       for (let obj of jsonData) {
         if (obj === employee) {
           currentEmployee = obj;
+          // Get index of clicked employee for toggling
           currentEmployeeIndex = jsonData.indexOf(obj);
         }
       }
@@ -132,45 +150,41 @@ function generateEmployees(jsonData) {
       const modalDiv = makeElement("div", "modal");
       modalContainer.appendChild(modalDiv);
 
-      // Create and append exit button to modal window
-      // const button = document.createElement("button");
-      // button.setAttribute("id", "modal-close-btn");
-      // button.className = "modal-close-btn";
-
-      // const modalHTML = "<strong>X</strong>";
-      // button.insertAdjacentHTML("beforeend", modalHTML);
-      // modalDiv.appendChild(button);
-
       // Create container for employee details
       const modalInfoContainer = makeElement("div", "modal-info-container");
       modalDiv.appendChild(modalInfoContainer);
 
-      // Create and append buttons to toggle through employee cards
+      // Create and append buttons to modal window to toggle through employee cards
       const modalButtonContainer = document.createElement("div");
       modalButtonContainer.className = "modal-btn-container";
       const modalPaginationHTML = `<button type="button" id="modal-prev" class="modal-prev btn">Prev</button>
       <button type="button" id="modal-next" class="modal-next btn">Next</button>`;
-
       modalButtonContainer.insertAdjacentHTML("beforeend", modalPaginationHTML);
       modalContainer.appendChild(modalButtonContainer);
       const modalPrevBtn = document.getElementById("modal-prev");
       const modalNextBtn = document.getElementById("modal-next");
 
+      // Create modal html string of current employee and append to inner html of modal div
       let modalInfoHTML = generateModalData(currentEmployee);
-
-      // modalDiv.insertAdjacentHTML("beforeend", modalInfoHTML);
       modalDiv.innerHTML = modalInfoHTML;
 
-      // Event listeners to toggle between next and previous employees
+      // Event listener to toggle to previous employee
       modalPrevBtn.addEventListener("click", () => {
+        /**
+          Conditional to check if the index of the current
+          employee is in range of the jsonData array
+        */
         if (currentEmployeeIndex > 0) {
+          // Get previous employee data
           previousEmployee = jsonData[currentEmployeeIndex - 1];
+          // Decrement index
           currentEmployeeIndex--;
 
+          // Change inner html of modal div to previous employee
           modalInfoHTML = generateModalData(previousEmployee);
-          // modalDiv.insertAdjacentHTML("beforeend", modalInfoHTML);
           modalDiv.innerHTML = modalInfoHTML;
 
+          // Set click event listener on modal window close button
           const button = document.getElementById("modal-close-btn");
           button.addEventListener("click", () => {
             modalContainer.remove();
@@ -178,23 +192,34 @@ function generateEmployees(jsonData) {
         }
       });
 
+      // Event listener to toggle to next employee
       modalNextBtn.addEventListener("click", () => {
+        /**
+          Conditional to check if the index of the current
+          employee is in range of the jsonData array
+        */
         if (currentEmployeeIndex < jsonData.length - 1) {
+          // Get next employee data
           nextEmployee = jsonData[currentEmployeeIndex + 1];
+          // Increment index
           currentEmployeeIndex++;
 
+          // Change inner html of modal div to next employee
           modalInfoHTML = generateModalData(nextEmployee);
-          // modalDiv.insertAdjacentHTML("beforeend", modalInfoHTML);
           modalDiv.innerHTML = modalInfoHTML;
-          const button = document.getElementById("modal-close-btn");
 
+          // Set click event listener on modal window close button
+          const button = document.getElementById("modal-close-btn");
           button.addEventListener("click", () => {
             modalContainer.remove();
           });
         }
       });
 
-      // Event listener to close modal window
+      /**
+      Event listener to close modal window if neither toggle buttons have
+      been clicked
+      */
       const button = document.getElementById("modal-close-btn");
       button.addEventListener("click", () => {
         modalContainer.remove();
@@ -203,18 +228,27 @@ function generateEmployees(jsonData) {
   });
 }
 
-// Function to fetch data from url and parse to json
+/**
+ * Function to fetch data from url and parse to json
+ * @param {string} url - The url to get data from
+ * @return {object} - The parsed json data from the url
+ */
 function fetchData(url) {
   return fetch(url)
     .then(checkStatus)
     .then((res) => res.json())
     .catch((e) => {
       (gallery.innerHTML =
-        "<p>Looks like there was a problem! Refresh the page.</p>"),
+        "<h3>Looks like there was a problem! Refresh the page.</h3>"),
         console.error(e);
     });
 }
 
+/**
+ * Helper function to check status response of the requested jsonData
+ * @param {object} response - The response received from the fetch api
+ * @return {object} - Resolved or rejected Promise
+ */
 function checkStatus(response) {
   if (response.ok) {
     return Promise.resolve(response);
@@ -223,66 +257,56 @@ function checkStatus(response) {
   }
 }
 
+// Select submit button and input field in the search bar
+const searchSubmit = document.getElementById("search-submit");
+const formInput = document.getElementById("search-input");
+
+// Request data from api
 fetchData("https://randomuser.me/api/?nat=us,au,nz&results=12").then((data) => {
-  // Get employee elements
+  // Get all employee elements in a collection
   const cards = document.getElementsByClassName("card");
 
-  // Get employee info in an array data.results
+  function showSearchResults() {
+    // Array for storing search results
+    let searchArray = [];
+    for (let employee of data.results) {
+      const search = formInput.value.toLowerCase();
+      let name = employee.name.first + employee.name.last;
+      name = name.toLowerCase();
+
+      // Add employees whose names contain the search bar value
+      if (name.includes(search)) {
+        searchArray.push(employee);
+      }
+    }
+
+    // Display search results if they exist
+    if (searchArray.length) {
+      gallery.innerHTML = "";
+
+      for (let card of cards) {
+        card.style.display = "none";
+      }
+    } else {
+      for (let card of cards) {
+        gallery.innerHTML = "<p>There are no results for your search.</p>";
+        card.style.display = "none";
+      }
+    }
+    // Generate employee cards for the search results
+    generateEmployees(searchArray);
+  }
+
+  // Add keyup event listener on search bar
   searchContainer.addEventListener("keyup", () => {
-    let searchArray = [];
-    for (let employee of data.results) {
-      const search = formInput.value.toLowerCase();
-      let name = employee.name.first + employee.name.last;
-      name = name.toLowerCase();
-
-      if (name.includes(search)) {
-        searchArray.push(employee);
-      }
-    }
-
-    // Display search results
-    if (searchArray.length) {
-      gallery.innerHTML = "";
-
-      for (let card of cards) {
-        card.style.display = "none";
-      }
-    } else {
-      for (let card of cards) {
-        gallery.innerHTML = "<p>There are no results for your search.</p>";
-        card.style.display = "none";
-      }
-    }
-    generateEmployees(searchArray);
+    showSearchResults();
   });
 
+  // Add click event listener on submit button
   searchSubmit.addEventListener("click", () => {
-    let searchArray = [];
-    for (let employee of data.results) {
-      const search = formInput.value.toLowerCase();
-      let name = employee.name.first + employee.name.last;
-      name = name.toLowerCase();
-
-      if (name.includes(search)) {
-        searchArray.push(employee);
-      }
-    }
-
-    // Display search results
-    if (searchArray.length) {
-      gallery.innerHTML = "";
-      for (let card of cards) {
-        card.style.display = "none";
-      }
-    } else {
-      for (let card of cards) {
-        gallery.innerHTML = "<p>There are no results for your search.</p>";
-        card.style.display = "none";
-      }
-    }
-    formInput.value = "";
-    generateEmployees(searchArray);
+    showSearchResults();
   });
 
+  // Generate employee cards from parsed json
   generateEmployees(data.results);
 });
