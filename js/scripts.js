@@ -305,6 +305,7 @@ fetchData("https://randomuser.me/api/?nat=us,au,nz&results=12").then((data) => {
   // Add click event listener on submit button
   searchSubmit.addEventListener("click", () => {
     showSearchResults();
+    formInput.value = "";
   });
 
   // Generate employee cards from parsed json
